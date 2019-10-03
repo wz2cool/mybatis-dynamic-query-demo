@@ -1,5 +1,7 @@
 package com.github.wz2cool.mybatisdynamicquerydemo;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.wz2cool.dynamic.DynamicQuery;
 import com.github.wz2cool.dynamic.FilterGroupDescriptor;
 import com.github.wz2cool.dynamic.builder.DynamicQueryBuilder;
@@ -81,27 +83,63 @@ public class DemoTest {
         BigDecimal startPrice = BigDecimal.valueOf(1.1);
         BigDecimal endPrice = BigDecimal.valueOf(10.1);
         // 根据参数添加筛选条件，这里就是我们看看开始价，结束价有没有，如果有才会放到一个组里面，
-        // @formatter:off
+
         DynamicQuery<ProductsDO> query = DynamicQuery.createQuery(ProductsDO.class)
                 .select(ProductsDO::getProductName, ProductsDO::getListPrice, ProductsDO::getCategory)
-                .andGroupBegin(Objects.nonNull(startPrice) || Objects.nonNull(endPrice))
-                    .and(ProductsDO::getListPrice, greaterThan(startPrice), Objects.nonNull(startPrice))
-                    .and(ProductsDO::getListPrice, lessThan(endPrice), Objects.nonNull(endPrice))
-                .groupEnd()
+                .and(Objects.nonNull(startPrice) || Objects.nonNull(endPrice), group -> group
+                        .and(Objects.nonNull(startPrice), ProductsDO::getListPrice, greaterThan(startPrice))
+                        .and(Objects.nonNull(endPrice), ProductsDO::getListPrice, lessThan(endPrice)))
                 .and(ProductsDO::getDescription, notEqual(null))
                 .or(ProductsDO::getId, isEqual(1))
                 .orderBy(ProductsDO::getId, desc())
                 .orderBy(ProductsDO::getListPrice, asc());
         List<ProductsDO> result = productMapper.selectByDynamicQuery(query);
         Assert.assertFalse(result.isEmpty());
-        // @formatter:on
+
     }
 
     @Test
-    public void testSelect() {
-        System.out.println(("----- selectAll method test ------"));
-        List<ProductsDO> userList = productPlusMapper.selectList(null);
-        Assert.assertEquals(5, userList.size());
-        userList.forEach(System.out::println);
+    public void testGetProductListByQuery3() {
+        BigDecimal startPrice = BigDecimal.valueOf(1.1);
+        BigDecimal endPrice = BigDecimal.valueOf(10.1);
+        // 根据参数添加筛选条件，这里就是我们看看开始价，结束价有没有，如果有才会放到一个组里面，
+        DynamicQuery<ProductsDO> query = DynamicQuery.createQuery(ProductsDO.class)
+                .select(ProductsDO::getProductName, ProductsDO::getListPrice, ProductsDO::getCategory)
+                .and(priceGroup -> priceGroup
+                        .and(ProductsDO::getListPrice, greaterThan(startPrice))
+                        .and(ProductsDO::getListPrice, lessThan(endPrice))
+                        .and(idGroup -> idGroup
+                                .and(ProductsDO::getId, greaterThan(1))
+                                .and(ProductsDO::getId, lessThan(5))))
+                .and(ProductsDO::getDescription, notEqual(null))
+                .or(ProductsDO::getId, isEqual(1))
+                .orderBy(ProductsDO::getId, desc())
+                .orderBy(ProductsDO::getListPrice, asc());
+        List<ProductsDO> result = productMapper.selectByDynamicQuery(query);
+        Assert.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    public void testGetProductListByPlus() {
+        BigDecimal startPrice = BigDecimal.valueOf(1.1);
+        BigDecimal endPrice = BigDecimal.valueOf(10.1);
+        LambdaQueryWrapper<ProductsDO> queryWrapper = new QueryWrapper<ProductsDO>().lambda()
+                .select(ProductsDO::getListPrice, ProductsDO::getProductName, ProductsDO::getCategory);
+        if (Objects.nonNull(startPrice) && Objects.nonNull(endPrice)) {
+            // 这里我随意在筛选后面添加了一个排序是会报错的
+            queryWrapper.and(obj -> obj.gt(ProductsDO::getListPrice, startPrice)
+                    .lt(ProductsDO::getListPrice, endPrice).orderByAsc(ProductsDO::getListPrice));
+        } else if (Objects.nonNull(startPrice)) {
+            queryWrapper.gt(ProductsDO::getListPrice, startPrice);
+        } else if (Objects.nonNull(endPrice)) {
+            queryWrapper.lt(ProductsDO::getListPrice, startPrice);
+        }
+
+        queryWrapper.ne(ProductsDO::getDescription, null)
+                .or(obj -> obj.eq(ProductsDO::getId, 1))
+                .orderByDesc(ProductsDO::getId)
+                .orderByAsc(ProductsDO::getListPrice);
+        List<ProductsDO> result = productPlusMapper.selectList(queryWrapper);
+        Assert.assertFalse(result.isEmpty());
     }
 }
