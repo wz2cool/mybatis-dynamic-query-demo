@@ -1,11 +1,10 @@
 package com.github.wz2cool.mybatisdynamicquerydemo;
 
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import com.github.wz2cool.dynamic.DynamicQuery;
 import com.github.wz2cool.dynamic.FilterGroupDescriptor;
 import com.github.wz2cool.dynamic.builder.DynamicQueryBuilder;
 import com.github.wz2cool.mybatisdynamicquerydemo.mapper.ProductMapper;
+import com.github.wz2cool.mybatisdynamicquerydemo.mapper.ProductPlusMapper;
 import com.github.wz2cool.mybatisdynamicquerydemo.model.entity.ProductsDO;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,10 +18,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static com.github.wz2cool.dynamic.builder.DynamicQueryBuilderHelper.*;
-import static com.github.wz2cool.dynamic.builder.DynamicQueryBuilderHelper.asc;
 
 /**
  * @author Frank
@@ -35,6 +32,8 @@ public class DemoTest {
 
     @Resource
     private ProductMapper productMapper;
+    @Resource
+    private ProductPlusMapper productPlusMapper;
 
     public List<ProductsDO> getProductListByBuilder() {
         // select product_name, list_price, category
@@ -96,5 +95,13 @@ public class DemoTest {
         List<ProductsDO> result = productMapper.selectByDynamicQuery(query);
         Assert.assertFalse(result.isEmpty());
         // @formatter:on
+    }
+
+    @Test
+    public void testSelect() {
+        System.out.println(("----- selectAll method test ------"));
+        List<ProductsDO> userList = productPlusMapper.selectList(null);
+        Assert.assertEquals(5, userList.size());
+        userList.forEach(System.out::println);
     }
 }

@@ -1,9 +1,12 @@
 package com.github.wz2cool.mybatisdynamicquerydemo.model.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+
 import java.math.*;
 import javax.persistence.*;
 
 @Table(name = "products")
+@TableName("products")
 public class ProductsDO {
     @Column
     private byte[] attachments;

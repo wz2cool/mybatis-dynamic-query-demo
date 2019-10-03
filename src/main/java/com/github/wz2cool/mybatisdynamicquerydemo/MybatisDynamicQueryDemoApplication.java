@@ -6,7 +6,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import tk.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
-@MapperScan("com.github.wz2cool.mybatisdynamicquerydemo.mapper.*")
+@MapperScan("com.github.wz2cool.mybatisdynamicquerydemo.mapper")
 @EnableSwagger2
 public class MybatisDynamicQueryDemoApplication {
 
