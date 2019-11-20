@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -102,6 +103,7 @@ public class DemoTest {
     public void testGetProductListByQuery3() {
         BigDecimal startPrice = BigDecimal.valueOf(1.1);
         BigDecimal endPrice = BigDecimal.valueOf(10.1);
+
         // 根据参数添加筛选条件，这里就是我们看看开始价，结束价有没有，如果有才会放到一个组里面，
         DynamicQuery<ProductsDO> query = DynamicQuery.createQuery(ProductsDO.class)
                 .select(ProductsDO::getProductName, ProductsDO::getListPrice, ProductsDO::getCategory)
@@ -120,6 +122,27 @@ public class DemoTest {
     }
 
     @Test
+    public void testGetProductListByPlus2() {
+        BigDecimal startPrice = BigDecimal.valueOf(1.1);
+        BigDecimal endPrice = BigDecimal.valueOf(10.1);
+        LambdaQueryWrapper<ProductsDO> queryWrapper = new QueryWrapper<ProductsDO>().lambda()
+                .select(ProductsDO::getListPrice, ProductsDO::getProductName, ProductsDO::getCategory)
+                .and(priceGroup -> priceGroup
+                        .gt(ProductsDO::getListPrice, startPrice)
+                        .lt(ProductsDO::getListPrice, endPrice)
+                        .and(idGroup -> idGroup
+                                .gt(ProductsDO::getId, 1)
+                                .lt(ProductsDO::getId, 5)))
+                .ne(ProductsDO::getDescription, null)
+                .or(obj -> obj.eq(ProductsDO::getId, 1))
+                .orderByAsc(ProductsDO::getId)
+                .orderByAsc(ProductsDO::getListPrice);
+
+        List<ProductsDO> result = productPlusMapper.selectList(queryWrapper);
+        Assert.assertFalse(result.isEmpty());
+    }
+
+    @Test
     public void testGetProductListByPlus() {
         BigDecimal startPrice = BigDecimal.valueOf(1.1);
         BigDecimal endPrice = BigDecimal.valueOf(10.1);
@@ -128,6 +151,7 @@ public class DemoTest {
         if (Objects.nonNull(startPrice) && Objects.nonNull(endPrice)) {
             // 这里我随意在筛选后面添加了一个排序是会报错的
             queryWrapper.and(obj -> obj.gt(ProductsDO::getListPrice, startPrice)
+                    .in(ProductsDO::getAttachments, "1", "2")
                     .lt(ProductsDO::getListPrice, endPrice).orderByAsc(ProductsDO::getListPrice));
         } else if (Objects.nonNull(startPrice)) {
             queryWrapper.gt(ProductsDO::getListPrice, startPrice);

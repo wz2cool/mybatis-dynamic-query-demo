@@ -7,5 +7,5 @@ import com.github.wz2cool.mybatisdynamicquerydemo.model.entity.ProductsDO;
  * @author Frank
  * @date 2019/10/03
  **/
-public interface ProductPlusMapper extends BaseMapper<ProductsDO> {
+public interface ProductPlusMapper extends BaseMapper<ProductsDO>{
 }
