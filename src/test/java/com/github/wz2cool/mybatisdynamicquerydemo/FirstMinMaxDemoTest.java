@@ -54,14 +54,14 @@ public class FirstMinMaxDemoTest {
         FROM products
         WHERE (id > 10) ORDER BY list_price DESC
         LIMIT 1;*/
-
+        // 直接用max 函数获取价格最大值
         DynamicQuery<ProductsDO> selectMaxQuery = DynamicQuery.createQuery(ProductsDO.class)
                 .and(ProductsDO::getId, greaterThan(10));
         Optional<BigDecimal> maxPriceOptional =
                 productMapper.selectMaxByDynamicQuery(ProductsDO::getListPrice, selectMaxQuery);
         Assert.assertTrue(maxPriceOptional.isPresent());
         BigDecimal actualMaxPrice = maxPriceOptional.get();
-
+        // 间接倒叙获得价格最大值
         DynamicQuery<ProductsDO> selectFirstQuery = DynamicQuery.createQuery(ProductsDO.class)
                 .select(ProductsDO::getListPrice)
                 .and(ProductsDO::getId, greaterThan(10))
@@ -71,5 +71,26 @@ public class FirstMinMaxDemoTest {
         BigDecimal expectedMaxPrice = productsDOOptional.get().getListPrice();
 
         Assert.assertEquals(expectedMaxPrice, actualMaxPrice);
+    }
+
+    @Test
+    public void testSelectMin() {
+        // 直接用min 函数获取价格最小值
+        DynamicQuery<ProductsDO> selectMinQuery = DynamicQuery.createQuery(ProductsDO.class)
+                .and(ProductsDO::getId, greaterThan(10));
+        Optional<BigDecimal> minPriceOptional =
+                productMapper.selectMinByDynamicQuery(ProductsDO::getListPrice, selectMinQuery);
+        Assert.assertTrue(minPriceOptional.isPresent());
+        BigDecimal actualMinPrice = minPriceOptional.get();
+        // 间接正序获取价格最小值
+        DynamicQuery<ProductsDO> selectFirstQuery = DynamicQuery.createQuery(ProductsDO.class)
+                .select(ProductsDO::getListPrice)
+                .and(ProductsDO::getId, greaterThan(10))
+                .orderBy(ProductsDO::getListPrice, asc());
+        Optional<ProductsDO> productsDOOptional = productMapper.selectFirstByDynamicQuery(selectFirstQuery);
+        Assert.assertTrue(productsDOOptional.isPresent());
+        BigDecimal expectedMinPrice = productsDOOptional.get().getListPrice();
+
+        Assert.assertEquals(expectedMinPrice, actualMinPrice);
     }
 }
